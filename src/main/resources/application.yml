@@ -87,3 +87,7 @@ cos:
     secretKey: xxx
     region: xxx
     bucket: xxx
+
+# 配置代码沙箱
+codesandbox:
+  type:

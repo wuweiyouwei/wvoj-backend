@@ -135,16 +135,19 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         Page<QuestionSubmitVO> questionSubmitVOPage = new Page<>(questionSubmitPage.getCurrent()
                 , questionSubmitPage.getSize(), questionSubmitPage.getTotal());
 
+        // 如果查询结果为空，则直接返回空的Page
         if (CollectionUtils.isEmpty(questionSubmitList)) {
             return questionSubmitVOPage;
         }
 
+        // 将QuestionSubmit对象转换为QuestionSubmitVO对象
         List<QuestionSubmitVO> questionSubmitVOList = questionSubmitList
                 .stream()
                 // 脱敏
                 .map(questionSubmit -> getQuestionSubmitVO(questionSubmit, loginUser))
                 .collect(Collectors.toList());
 
+        // 将QuestionSubmitVO对象放入Page中
         questionSubmitVOPage.setRecords(questionSubmitVOList);
 
         return questionSubmitVOPage;
