@@ -16,17 +16,17 @@ public class JudgeConfig implements Serializable {
     /**
      * 时间限制
      */
-    private String timeLimit;
+    private Long timeLimit;
 
     /**
      * 内存限制
      */
-    private String memoryLimit;
+    private Long memoryLimit;
 
     /**
      * 栈限制
      */
-    private String stackLimit;
+    private Long stackLimit;
 
     private static final long serialVersionUID = 1L;
 
