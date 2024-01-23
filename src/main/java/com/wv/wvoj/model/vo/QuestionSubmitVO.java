@@ -2,7 +2,7 @@ package com.wv.wvoj.model.vo;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
-import com.wv.wvoj.model.dto.questionsubmit.JudgeInfo;
+import com.wv.wvoj.judge.codesandbox.model.JudgeInfo;
 import com.wv.wvoj.model.entity.QuestionSubmit;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;

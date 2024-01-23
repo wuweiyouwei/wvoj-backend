@@ -24,8 +24,8 @@ public class CodeSandBoxProxy implements CodeSandBox{
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeRequest) {
 
         log.info("executeRequest:{}",executeRequest.toString());
-        codeSandBox.executeCode(executeRequest);
-        return null;
+        ExecuteCodeResponse executeCodeResponse = codeSandBox.executeCode(executeRequest);
+        return executeCodeResponse;
     }
 
 }

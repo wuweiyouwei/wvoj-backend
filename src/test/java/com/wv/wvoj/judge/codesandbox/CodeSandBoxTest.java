@@ -26,8 +26,6 @@ class CodeSandBoxTest {
      */
     @Test
     void executeCode() {
-
-
         String code = "int main{}";
         String language = "Java";
         List<String> list = Arrays.asList("1 2", "3 4");
@@ -38,7 +36,6 @@ class CodeSandBoxTest {
                 .build();
         CodeSandBox instance = CodeSandBoxFactory.getInstance(type);
         instance.executeCode(executeCodeRequest);
-
     }
 
 

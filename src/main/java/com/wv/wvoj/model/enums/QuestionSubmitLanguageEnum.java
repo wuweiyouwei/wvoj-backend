@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
  * @date 2023/11/27 19:00
  */
 public enum QuestionSubmitLanguageEnum {
-    JAVA("Java", "Java"),
-    CPLUSPLUS("C++", "C++"),
-    GOLANG("GOLANG", "GOLANG");
+    JAVA("java", "java"),
+    CPLUSPLUS("cpp", "cpp"),
+    GOLANG("go", "go");
 
     private final String text;
 

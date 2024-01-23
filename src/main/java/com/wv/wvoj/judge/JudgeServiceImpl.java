@@ -1,9 +1,9 @@
 package com.wv.wvoj.judge;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.wv.wvoj.common.ErrorCode;
 import com.wv.wvoj.exception.BusinessException;
@@ -12,16 +12,18 @@ import com.wv.wvoj.judge.codesandbox.CodeSandBoxFactory;
 import com.wv.wvoj.judge.codesandbox.CodeSandBoxProxy;
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeRequest;
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeResponse;
+import com.wv.wvoj.judge.strategy.DefaultJudgeStrategyImpl;
+import com.wv.wvoj.judge.strategy.JudgeContext;
+import com.wv.wvoj.judge.strategy.JudgeStrategy;
 import com.wv.wvoj.model.dto.question.JudgeCase;
 import com.wv.wvoj.model.dto.question.JudgeConfig;
-import com.wv.wvoj.model.dto.questionsubmit.JudgeInfo;
+import com.wv.wvoj.judge.codesandbox.model.JudgeInfo;
 import com.wv.wvoj.model.entity.Question;
 import com.wv.wvoj.model.entity.QuestionSubmit;
 import com.wv.wvoj.model.enums.JudgeInfoMessageEnum;
 import com.wv.wvoj.model.enums.QuestionSubmitStatusEnum;
 import com.wv.wvoj.service.QuestionService;
 import com.wv.wvoj.service.QuestionSubmitService;
-import org.eclipse.parsson.JsonUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -50,12 +52,15 @@ public class JudgeServiceImpl implements JudgeService {
     @Resource
     private QuestionSubmitService questionSubmitService;
 
+    @Resource
+    private JudgeManager judgeManager;
+
     @Override
-    public ExecuteCodeResponse doJudge(long questionSubmitId) {
+    public QuestionSubmit doJudge(long questionSubmitId) {
          /*
           业务逻辑
           1.根据提交的题目 id，查询题目的提交信息（代码，语言）
-          2.如果题目的提交状态为不等待中，就不用重复执行了
+          2.如果题目的提交状态不为等待中，就不用重复执行了
           3.更改提交状态为“判题中”。防止重复执行，也能让用户立即看到状态
           4.调用沙箱，获取到执行结果
           5.根据沙箱的执行结果，设置题目的判题状态和信息
@@ -69,7 +74,7 @@ public class JudgeServiceImpl implements JudgeService {
         }
         Long questionId = questionSubmit.getQuestionId();
         // 题目信息
-        Question question = questionService.getById(questionSubmitId);
+        Question question = questionService.getById(questionId);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "题目信息不存在");
         }
@@ -79,7 +84,7 @@ public class JudgeServiceImpl implements JudgeService {
         }
         // 3.更改提交状态为“判题中”。防止重复执行，也能让用户立即看到状态
         QuestionSubmit questionSubmitUpdate = new QuestionSubmit();
-        questionSubmitUpdate.setQuestionId(questionId);
+        questionSubmitUpdate.setId(questionSubmitId);
         questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.RUNNING.getValue());
         boolean update = questionSubmitService.updateById(questionSubmitUpdate);
         if (!update) {
@@ -104,36 +109,30 @@ public class JudgeServiceImpl implements JudgeService {
 
         // 5.根据沙箱的执行结果，设置题目的判题状态和信息
         List<String> outputList = executeCodeResponse.getOutputList();
-        JudgeInfoMessageEnum judgeInfoMessageEnum = JudgeInfoMessageEnum.WAITING;
-        // 5.1先判断用例条数
-        if (inputList.size() != outputList.size()) {
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.WRONG_ANSWER;
-            return null;
-        }
-        for (int i = 0; i < outputList.size(); i++) {
-            JudgeCase judgeCase = judgeCases.get(i);
-            if (!judgeCase.getOutput().equals(outputList.get(i))) {
-                // 5.2输出用例不同
-                judgeInfoMessageEnum = JudgeInfoMessageEnum.WRONG_ANSWER;
-                return null;
-            }
-        }
-        // 5.3判断题目限制
-        JudgeInfo judgeInfo = executeCodeResponse.getJudgeInfo();
-        Long memory = judgeInfo.getMemory();
-        Long time = judgeInfo.getTime();
-        String judgeConfigStr = question.getJudgeConfig();
-        JudgeConfig judgeConfig = JSONUtil.toBean(judgeConfigStr, JudgeConfig.class);
-        if (memory > judgeConfig.getMemoryLimit()) {
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.MEMORY_LIMIT_EXCEEDED;
-            return null;
-        }
-        if (time > judgeConfig.getTimeLimit()) {
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.TIME_LIMIT_EXCEEDED;
-            return null;
+
+//        JudgeStrategy judgeStrategy = new DefaultJudgeStrategyImpl();
+        JudgeContext judgeContext = new JudgeContext();
+        judgeContext.setJudgeInfo(executeCodeResponse.getJudgeInfo());
+        judgeContext.setInputList(inputList);
+        judgeContext.setOutputList(outputList);
+        judgeContext.setJudgeCaseList(judgeCases);
+        judgeContext.setQuestion(question);
+        judgeContext.setQuestionSubmit(questionSubmit);
+
+        JudgeInfo judgeInfo = judgeManager.doJudge(judgeContext);
+
+        // 更新数据库中的判题结果
+        questionSubmitUpdate = new QuestionSubmit();
+        questionSubmitUpdate.setId(questionSubmitId);
+        questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.SUCCEED.getValue());
+        questionSubmitUpdate.setJudgeInfo(JSONUtil.toJsonStr(judgeInfo));
+        update = questionSubmitService.updateById(questionSubmitUpdate);
+        if (!update) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目状态更新失败");
         }
 
-        return executeCodeResponse;
+        QuestionSubmit questionSubmitResult = questionSubmitService.getById(questionId);
+        return questionSubmitResult;
 
     }
 }

@@ -1,6 +1,5 @@
 package com.wv.wvoj.judge.codesandbox.model;
 
-import com.wv.wvoj.model.dto.questionsubmit.JudgeInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

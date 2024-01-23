@@ -1,7 +1,7 @@
 package com.wv.wvoj.judge;
 
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeResponse;
-import com.wv.wvoj.model.dto.questionsubmit.QuestionSubmitQueryRequest;
+import com.wv.wvoj.model.entity.QuestionSubmit;
 
 /**
  * 判题服务
@@ -16,5 +16,5 @@ public interface JudgeService {
      * @param questionId 题目 id
      * @return
      */
-    ExecuteCodeResponse doJudge(long questionId);
+    QuestionSubmit doJudge(long questionId);
 }

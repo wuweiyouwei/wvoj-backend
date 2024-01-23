@@ -1,6 +1,6 @@
 package com.wv.wvoj.judge.codesandbox.impl;
-import com.wv.wvoj.model.dto.questionsubmit.JudgeInfo;
-import java.util.ArrayList;
+import com.wv.wvoj.judge.codesandbox.model.JudgeInfo;
+
 import java.util.List;
 
 import com.wv.wvoj.judge.codesandbox.CodeSandBox;
