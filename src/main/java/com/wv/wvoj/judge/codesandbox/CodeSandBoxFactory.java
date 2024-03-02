@@ -3,6 +3,7 @@ package com.wv.wvoj.judge.codesandbox;
 import com.wv.wvoj.judge.codesandbox.impl.ExampleCodeSandBox;
 import com.wv.wvoj.judge.codesandbox.impl.RemoteCodeSandBox;
 import com.wv.wvoj.judge.codesandbox.impl.ThirdPartyCodeSandBox;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * 代码沙箱静态工厂

@@ -3,6 +3,7 @@ package com.wv.wvoj.judge.codesandbox;
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeRequest;
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 /**
  * 代码沙箱代理（便于增强操作）

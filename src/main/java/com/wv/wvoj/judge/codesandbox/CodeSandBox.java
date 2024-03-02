@@ -2,6 +2,7 @@ package com.wv.wvoj.judge.codesandbox;
 
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeRequest;
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeResponse;
+import com.wv.wvojapiclientsdk.client.ApiClient;
 
 /**
  * 代码沙箱接口定义

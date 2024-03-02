@@ -1,10 +1,7 @@
 package com.wv.wvoj.judge;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import cn.hutool.json.JSONUtil;
+import com.github.mustachejava.Code;
 import com.wv.wvoj.common.ErrorCode;
 import com.wv.wvoj.exception.BusinessException;
 import com.wv.wvoj.judge.codesandbox.CodeSandBox;
@@ -12,15 +9,11 @@ import com.wv.wvoj.judge.codesandbox.CodeSandBoxFactory;
 import com.wv.wvoj.judge.codesandbox.CodeSandBoxProxy;
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeRequest;
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeResponse;
-import com.wv.wvoj.judge.strategy.DefaultJudgeStrategyImpl;
-import com.wv.wvoj.judge.strategy.JudgeContext;
-import com.wv.wvoj.judge.strategy.JudgeStrategy;
-import com.wv.wvoj.model.dto.question.JudgeCase;
-import com.wv.wvoj.model.dto.question.JudgeConfig;
 import com.wv.wvoj.judge.codesandbox.model.JudgeInfo;
+import com.wv.wvoj.judge.strategy.JudgeContext;
+import com.wv.wvoj.model.dto.question.JudgeCase;
 import com.wv.wvoj.model.entity.Question;
 import com.wv.wvoj.model.entity.QuestionSubmit;
-import com.wv.wvoj.model.enums.JudgeInfoMessageEnum;
 import com.wv.wvoj.model.enums.QuestionSubmitStatusEnum;
 import com.wv.wvoj.service.QuestionService;
 import com.wv.wvoj.service.QuestionSubmitService;
@@ -28,6 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 判题服务实现类
@@ -53,6 +48,9 @@ public class JudgeServiceImpl implements JudgeService {
     private QuestionSubmitService questionSubmitService;
 
     @Resource
+    private CodeSandBox codeSandBox;
+
+    @Resource
     private JudgeManager judgeManager;
 
     @Override
@@ -65,7 +63,6 @@ public class JudgeServiceImpl implements JudgeService {
           4.调用沙箱，获取到执行结果
           5.根据沙箱的执行结果，设置题目的判题状态和信息
          */
-
         // 1.根据提交的题目 id，查询题目的提交信息（代码，语言）
         // 题目提交信息
         QuestionSubmit questionSubmit = questionSubmitService.getById(questionSubmitId);
@@ -92,7 +89,7 @@ public class JudgeServiceImpl implements JudgeService {
         }
 
         // 4.调用沙箱，获取到执行结果
-        CodeSandBox codeSandBox = CodeSandBoxFactory.getInstance(type);
+//        CodeSandBox codeSandBox = CodeSandBoxFactory.getInstance(type);
         codeSandBox = new CodeSandBoxProxy(codeSandBox);
         // 获取输入用例
         String judgeCaseStr = question.getJudgeCase();
