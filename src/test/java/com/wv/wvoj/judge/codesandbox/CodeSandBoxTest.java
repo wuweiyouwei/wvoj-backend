@@ -1,6 +1,8 @@
 package com.wv.wvoj.judge.codesandbox;
 
 import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeRequest;
+import com.wv.wvoj.judge.codesandbox.model.ExecuteCodeResponse;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +23,7 @@ class CodeSandBoxTest {
 
     @Value("${codesandbox.type:example}")
     private String type;
+
     /**
      * 测试代码沙箱
      */
@@ -46,7 +49,13 @@ class CodeSandBoxTest {
     void executeCodeWithProxy() {
 
 
-        String code = "int main{}";
+        String code = "public class Main {\n" +
+                "    public static void main(String[] args) {\n" +
+                "        int a = Integer.parseInt(args[0]);\n" +
+                "        int b = Integer.parseInt(args[1]);\n" +
+                "        System.out.println(\"a + b 等于 \" + (a + b));\n" +
+                "    }\n" +
+                "}";
         String language = "Java";
         List<String> list = Arrays.asList("1 2", "3 4");
         ExecuteCodeRequest executeCodeRequest = ExecuteCodeRequest.builder()
@@ -56,7 +65,8 @@ class CodeSandBoxTest {
                 .build();
         CodeSandBox instance = CodeSandBoxFactory.getInstance(type);
         CodeSandBoxProxy codeSandBoxProxy = new CodeSandBoxProxy(instance);
-        codeSandBoxProxy.executeCode(executeCodeRequest);
+        ExecuteCodeResponse executeCodeResponse = instance.executeCode(executeCodeRequest);
+        Assertions.assertNotNull(executeCodeResponse);
 
     }
 
@@ -64,9 +74,13 @@ class CodeSandBoxTest {
 
         Scanner scanner = new Scanner(System.in);
 
-        while(scanner.hasNext()) {
+        while (scanner.hasNext()) {
             String type = scanner.next();
-            String code = "int main{}";
+            String code = "public static void main(String[] args) {\n" +
+                    "        int a = Integer.parseInt(args[0]);\n" +
+                    "        int b = Integer.parseInt(args[1]);\n" +
+                    "        System.out.println(\"a + b = \" + (a + b));\n" +
+                    "    }";
             String language = "Java";
             List<String> list = Arrays.asList("1 2", "3 4");
             ExecuteCodeRequest executeCodeRequest = ExecuteCodeRequest.builder()
@@ -75,7 +89,8 @@ class CodeSandBoxTest {
                     .inputList(list)
                     .build();
             CodeSandBox instance = CodeSandBoxFactory.getInstance(type);
-            instance.executeCode(executeCodeRequest);
+            ExecuteCodeResponse executeCodeResponse = instance.executeCode(executeCodeRequest);
+            Assertions.assertNotNull(executeCodeResponse);
         }
     }
 }

@@ -66,3 +66,20 @@ create table if not exists question_submit
     index idx_userId (userId)
 ) comment '题目提交';
 
+-- 消息发送日志表
+create table message_send_log
+(
+    msgId            bigint auto_increment comment 'id' primary key
+                                                        not null comment '消息id（uuid）',
+    questionSubmitId bigint                             null comment '题目提交id',
+    routeKey         varchar(255)                       null comment '队列名字',
+    `status`         tinyint  default 0                 null comment '0-发送中 1-发送成功 2-发送失败',
+    `exchange`       varchar(255)                       null comment '交换机名字',
+    tryCount         tinyint                            null comment '重试次数',
+    tryTime          datetime                           null comment '第一次重试时间',
+    createTime       datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    updateTime       datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '修改时间',
+    isDelete         tinyint  default 0                 null comment '是否删除'
+)
+    comment '消息发送日志表';
+

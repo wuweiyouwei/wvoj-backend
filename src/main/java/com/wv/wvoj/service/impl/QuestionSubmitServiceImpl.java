@@ -1,5 +1,9 @@
 package com.wv.wvoj.service.impl;
 
+import java.util.Date;
+
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -10,12 +14,16 @@ import com.wv.wvoj.judge.JudgeService;
 import com.wv.wvoj.mapper.QuestionSubmitMapper;
 import com.wv.wvoj.model.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.wv.wvoj.model.dto.questionsubmit.QuestionSubmitQueryRequest;
+import com.wv.wvoj.model.entity.MessageSendLog;
 import com.wv.wvoj.model.entity.Question;
 import com.wv.wvoj.model.entity.QuestionSubmit;
 import com.wv.wvoj.model.entity.User;
 import com.wv.wvoj.model.enums.QuestionSubmitLanguageEnum;
 import com.wv.wvoj.model.enums.QuestionSubmitStatusEnum;
+import com.wv.wvoj.model.enums.SendLogStatusEnum;
 import com.wv.wvoj.model.vo.QuestionSubmitVO;
+import com.wv.wvoj.rabbitmq.MessageSendConfig;
+import com.wv.wvoj.service.MessageSendLogService;
 import com.wv.wvoj.service.QuestionService;
 import com.wv.wvoj.service.QuestionSubmitService;
 import com.wv.wvoj.service.UserService;
@@ -23,12 +31,13 @@ import com.wv.wvoj.utils.SqlUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +58,13 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     @Resource
     @Lazy
     private JudgeService judgeService;
+
+
+    @Resource
+    private MessageSendLogService messageSendLogService;
+
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
 
     @Override
@@ -81,12 +97,41 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败");
         }
 
+        // 执行判题服务
+//        CompletableFuture.runAsync(() -> {
+//            judgeService.doJudge(questionSubmitId);
+//        });
         Long questionSubmitId = questionSubmit.getId();
 
-        // 执行判题服务
-        CompletableFuture.runAsync(() -> {
-            judgeService.doJudge(questionSubmitId);
-        });
+        // 异步：执行判题服务
+        // 将要发给消息中间件的信息记录到数据库中
+        long msgId = RandomUtil.randomLong();
+        MessageSendLog messageSendLog = new MessageSendLog();
+        messageSendLog.setMsgId(msgId);
+        // 题目提交id
+        messageSendLog.setQuestionSubmitId(questionSubmitId);
+        // 设置路由键
+        messageSendLog.setRouteKey(MessageSendConfig.SEND_CODE_QUEUE_NAME);
+        // 设置交换机
+        messageSendLog.setExchange(MessageSendConfig.SEND_CODE_EXCHANGE_NAME);
+        // 设置消息状态为发送中
+        messageSendLog.setStatus(SendLogStatusEnum.SENDING.getValue());
+        // 表示没重试 最多重试三次
+        messageSendLog.setTryCount(0);
+        // 设置重试时间在一分钟之后
+        messageSendLog.setTryTime(new Date(System.currentTimeMillis() + 60 * 1000));
+
+        boolean saveMessageSendLog = messageSendLogService.save(messageSendLog);
+        if (!saveMessageSendLog) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "日志插入失败");
+        }
+
+        // 发送消息
+        rabbitTemplate.convertAndSend(MessageSendConfig.SEND_CODE_EXCHANGE_NAME,
+                MessageSendConfig.SEND_CODE_QUEUE_NAME,
+                questionSubmitId,
+                new CorrelationData(String.valueOf(msgId)));
+
         return questionSubmitId;
 
     }

@@ -27,8 +27,15 @@ public class JavaJudgeStrategyImpl implements JudgeStrategy {
     public JudgeInfo doJudge(JudgeContext judgeContext) {
 
         JudgeInfo judgeInfo = judgeContext.getJudgeInfo();
-        Long memory = Optional.ofNullable(judgeInfo.getMemory()).orElse(0L);
-        Long time = Optional.ofNullable(judgeInfo.getTime()).orElse(0L);
+        long memory;
+        long time;
+        if (judgeInfo == null) {
+            memory = 0L;
+            time = 0L;
+        } else {
+            memory = Optional.ofNullable(judgeInfo.getMemory()).orElse(0L);
+            time = Optional.ofNullable(judgeInfo.getTime()).orElse(0L);
+        }
         List<String> inputList = judgeContext.getInputList();
         List<String> outputList = judgeContext.getOutputList();
         List<JudgeCase> judgeCaseList = judgeContext.getJudgeCaseList();
