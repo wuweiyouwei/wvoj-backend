@@ -2,7 +2,9 @@ package com.wv.wvoj.service.impl;
 
 import java.util.Date;
 
+import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -76,7 +78,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "编程语言错误");
         }
         long questionId = questionSubmitAddRequest.getQuestionId();
-        // 判断实体是否存在，根据类别获取实体
+        // 判断实体是否存在，根据类别获取实体r
         Question question = questionService.getById(questionId);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
@@ -105,7 +107,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
         // 异步：执行判题服务
         // 将要发给消息中间件的信息记录到数据库中
-        long msgId = RandomUtil.randomLong();
+        // 使用雪花算法创建为主键的 msgId
+        long msgId = IdUtil.getSnowflakeNextId();
+
         MessageSendLog messageSendLog = new MessageSendLog();
         messageSendLog.setMsgId(msgId);
         // 题目提交id
